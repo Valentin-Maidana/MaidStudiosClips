@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MAID STUDIOS | Sistema para Creadores</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg-dark: #050505;
+            --bg-card: linear-gradient(145deg, #111111, #1a1a1a);
+            --bg-card-alt: linear-gradient(145deg, #0d0d0d, #141414);
+            --text-light: #f2efe9;
+            --text-muted: #888888;
+            --border-color: #222222;
+            --border-hover: #444444;
+            --accent: #ffffff;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; scroll-behavior: smooth; }
+        body { background-color: var(--bg-dark); color: var(--text-light); line-height: 1.6; overflow-x: hidden; }
+
+        .reveal { opacity: 0; transform: translateY(40px); transition: all 0.8s cubic-bezier(0.25, 0.8, 0.25, 1); }
+        .reveal.active { opacity: 1; transform: translateY(0); }
+
+        @keyframes pulseGlow {
+            0% { box-shadow: 0 0 15px rgba(255, 255, 255, 0.02); border-color: #333; }
+            50% { box-shadow: 0 0 30px rgba(255, 255, 255, 0.1); border-color: #666; }
+            100% { box-shadow: 0 0 15px rgba(255, 255, 255, 0.02); border-color: #333; }
+        }
+
+        /* Navbar */
+        nav { padding: 20px 5%; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background-color: rgba(5, 5, 5, 0.8); backdrop-filter: blur(12px); position: sticky; top: 0; z-index: 100; }
+        .logo { font-size: 24px; font-weight: 900; letter-spacing: 2px; }
+        .logo span { font-weight: 400; color: var(--text-muted); font-size: 14px; letter-spacing: 4px; }
+
+        /* Hero */
+        .hero { text-align: center; padding: 120px 5% 100px; max-width: 900px; margin: 0 auto; }
+        .hero h1 { font-size: 3.5rem; margin-bottom: 20px; line-height: 1.1; text-transform: uppercase; letter-spacing: -1px;}
+        .hero p { font-size: 1.2rem; color: var(--text-muted); margin-bottom: 40px; }
+        
+        .btn { display: inline-block; background-color: var(--text-light); color: var(--bg-dark); padding: 15px 40px; font-size: 1.1rem; font-weight: bold; text-decoration: none; text-transform: uppercase; border-radius: 4px; transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); }
+        .btn:hover { background-color: #ffffff; transform: translateY(-4px) scale(1.02); box-shadow: 0 10px 20px rgba(255,255,255,0.15); }
+        .btn-outline { background-color: transparent; color: var(--text-light); border: 1px solid var(--border-color); }
+        .btn-outline:hover { background-color: rgba(255,255,255,0.05); border-color: var(--border-hover); }
+
+        /* Layout */
+        .container { max-width: 1100px; margin: 0 auto; padding: 80px 5%; }
+        .container-sm { max-width: 800px; margin: 0 auto; padding: 60px 5%; }
+        .section-title { text-align: center; font-size: 2.2rem; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 1px; color: #fff; }
+        .section-subtitle { text-align: center; color: var(--text-muted); max-width: 800px; margin: 0 auto 60px; font-size: 1.1rem; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
+        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+        .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+
+        /* Cards */
+        .card { background: var(--bg-card); border: 1px solid var(--border-color); padding: 40px 30px; border-radius: 8px; transition: all 0.4s ease; height: 100%; }
+        .card:hover { transform: translateY(-10px); border-color: var(--border-hover); box-shadow: 0 20px 40px rgba(0,0,0,0.8); }
+        .card h3 { font-size: 1.3rem; margin-bottom: 15px; text-transform: uppercase; color: #fff;}
+        .card p { color: var(--text-muted); font-size: 0.95rem; margin-bottom: 20px; }
+        .card ul { list-style: none; color: var(--text-muted); font-size: 0.95rem; }
+        .card ul li { margin-bottom: 10px; padding-left: 18px; position: relative; }
+        .card ul li::before { content: '✦'; position: absolute; left: 0; color: #666; font-size: 0.8rem; transition: 0.3s;}
+        .card:hover ul li::before { color: var(--text-light); }
+
+        .highlight-box { background: rgba(255, 255, 255, 0.03); border-left: 4px solid var(--text-light); padding: 30px; margin-bottom: 40px; border-radius: 0 8px 8px 0; }
+        .highlight-box h4 { font-size: 1.2rem; text-transform: uppercase; margin-bottom: 10px; }
+        .badge { display: inline-block; padding: 4px 10px; background: #222; border: 1px solid #444; border-radius: 20px; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; }
+
+        /* Gráfico */
+        .chart-section { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 40px; margin-top: 30px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
+        .canvas-container { position: relative; height: 400px; width: 100%; }
+
+        /* Pricing */
+        .pricing-card { background: var(--bg-card-alt); text-align: center; padding: 50px 30px; border-radius: 8px; border: 1px solid var(--border-color); transition: all 0.4s ease; }
+        .pricing-card.premium { border: 1px solid #444; background: linear-gradient(180deg, #111, #050505); animation: pulseGlow 4s infinite alternate; position: relative; overflow: hidden; }
+        .pricing-card:hover { transform: translateY(-10px); border-color: var(--border-hover); box-shadow: 0 20px 40px rgba(0,0,0,0.8); }
+        .pricing-card h4 { font-size: 1.4rem; text-transform: uppercase; margin-bottom: 15px; color: #ddd;}
+        .pricing-card .price { font-size: 3rem; font-weight: bold; margin-bottom: 10px; color: var(--text-light); }
+        .pricing-card .desc { color: var(--text-muted); margin-bottom: 25px; font-size: 0.95rem; }
+        .pricing-card ul li { border-bottom: 1px solid var(--border-color); padding-bottom: 10px; margin-bottom: 10px; font-size: 0.95rem;}
+        .pricing-card ul li:last-child { border-bottom: none; }
+
+        /* Testimonials */
+        .testimonial-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 40px; }
+        .testimonial-card {
+            background: var(--bg-card-alt);
+            border: 1px solid var(--border-color);
+            padding: 30px;
+            border-radius: 8px;
+            position: relative;
+        }
+        .testimonial-card::before {
+            content: '"';
+            position: absolute;
+            top: 10px;
+            left: 20px;
+            font-size: 4rem;
+            color: rgba(255,255,255,0.05);
+            font-family: serif;
+        }
+        .testimonial-text { color: var(--text-light); font-style: italic; margin-bottom: 20px; font-size: 0.95rem; position: relative; z-index: 1;}
+        .testimonial-author { display: flex; align-items: center; gap: 15px; }
+        .author-avatar { width: 50px; height: 50px; border-radius: 50%; background-color: #333; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #fff; border: 2px solid #555;}
+        .author-info h5 { color: #fff; margin: 0; font-size: 1rem; }
+        .author-info p { color: var(--text-muted); margin: 0; font-size: 0.8rem; }
+        .highlight-metric { color: #fff; font-weight: bold; }
+
+        /* Contact Section */
+        .contact-info { margin-top: 40px; font-size: 1.1rem; color: #ddd; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+        .contact-info a { color: var(--text-light); text-decoration: none; font-weight: bold; transition: color 0.3s; }
+        .contact-info a:hover { color: #888; }
+
+        footer { text-align: center; padding: 50px 5%; border-top: 1px solid var(--border-color); margin-top: 60px; color: #555; font-size: 0.85rem; letter-spacing: 3px; text-transform: uppercase; }
+
+        @media (max-width: 900px) { .grid-4, .grid-3, .testimonial-grid { grid-template-columns: 1fr 1fr; } }
+        @media (max-width: 768px) { .grid-2, .grid-4, .grid-3, .testimonial-grid { grid-template-columns: 1fr; } .hero h1 { font-size: 2.2rem; } .canvas-container { height: 300px; } }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <div class="logo">MAID <span>✦ STUDIOS ✦</span></div>
+        <a href="#precios" class="btn btn-outline" style="padding: 10px 20px; font-size: 0.85rem;">Ver Planes</a>
+    </nav>
+
+    <header class="hero reveal active">
+        <div class="badge">Growth para YouTubers</div>
+        <h1>No dejes que el algoritmo entierre tu mejor contenido.</h1>
+        <p>Transformá un video de YouTube en 30 Shorts virales. Nosotros nos encargamos de que estés omnipresente en TikTok, Reels y Shorts los 7 días de la semana, para que vos solo te enfoques en grabar tu contenido principal sin mover un dedo en la edición corta.</p>
+        <div style="display:flex; gap:15px; justify-content:center; flex-wrap: wrap;">
+            <a href="#precios" class="btn">Paga lo que apruebas</a>
+            <a href="#grafico" class="btn btn-outline">Ver Impacto</a>
+        </div>
+    </header>
+
+    <div class="container" style="padding-top: 20px;">
+        <h2 class="section-title reveal">El Motor de Retención</h2>
+        <p class="section-subtitle reveal">Extraemos los momentos de mayor retención de tus videos largos. Usamos esos "Hooks" como anzuelos para redirigir tráfico masivo directamente hacia tu canal de YouTube y aumentar tu comunidad y visibilidad.</p>
+        
+        <div class="grid-4">
+            <div class="card reveal" style="padding: 30px 20px;">
+                <div style="font-size: 2rem; color: #fff; margin-bottom: 10px;">01</div>
+                <h3 style="font-size: 1.1rem;">Curaduría</h3>
+                <p style="margin-bottom: 0;">Filtramos horas de tu canal para aislar los "Hooks" que capturan audiencia al instante.</p>
+            </div>
+            <div class="card reveal" style="padding: 30px 20px; border-color: #444;">
+                <div style="font-size: 2rem; color: #fff; margin-bottom: 10px;">02</div>
+                <h3 style="font-size: 1.1rem; color: var(--text-light);">Post-Producción</h3>
+                <p style="margin-bottom: 0;">Audio premium, subtítulos de alta retención, B-roll, SFX y dinamismo visual para cada Short.</p>
+            </div>
+            <div class="card reveal" style="padding: 30px 20px;">
+                <div style="font-size: 2rem; color: #fff; margin-bottom: 10px;">03</div>
+                <h3 style="font-size: 1.1rem;">Riesgo Cero</h3>
+                <p style="margin-bottom: 0;">Tú revisas la selección. Solo pagas por los clips que apruebas y decides publicar.</p>
+            </div>
+            <div class="card reveal" style="padding: 30px 20px; border-color: #444;">
+                <div style="font-size: 2rem; color: #fff; margin-bottom: 10px;">04</div>
+                <h3 style="font-size: 1.1rem; color: var(--text-light);">El Embudo Real</h3>
+                <p style="margin-bottom: 0;">Short Viral → Curiosidad de la audiencia → Clic al Video Largo → Nuevo Suscriptor.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="container" id="grafico">
+        <h2 class="section-title reveal">Proyección de Vistas de un Video</h2>
+        <p class="section-subtitle reveal">Tu esfuerzo merece más vida útil. Un video de YouTube sin estrategia de recortes genera un pico de vistas inicial y luego el algoritmo lo frena. Al reciclarlo y distribuirlo con Shorts y Reels, mantenemos el tráfico bombeando hacia tu canal principal durante meses.</p>
+        
+        <div class="chart-section reveal">
+            <div class="canvas-container">
+                <canvas id="growthChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- SECCIÓN DE CASOS DE ÉXITO (TESTIMONIOS REALES) -->
+    <div class="container">
+        <h2 class="section-title reveal">Lo que dicen los creadores</h2>
+        <p class="section-subtitle reveal">Ellos ya delegaron la distribución de formato corto y escalaron sus comunidades.</p>
+        
+        <div class="testimonial-grid">
+            <div class="testimonial-card reveal">
+                <p class="testimonial-text">"Llevamos más de dos años trabajando juntos y Maid Studios me maneja el 100% del contenido. Me sacaron un peso enorme de encima con la edición de los clips cortos. <span class="highlight-metric">El nivel de producción es increíble</span> y el crecimiento orgánico se nota mes a mes."</p>
+                <div class="testimonial-author">
+                    <div class="author-avatar" style="background-color: #2a2a2a;">KS</div>
+                    <div class="author-info">
+                        <h5>Kito Shelby</h5>
+                        <p>Creador de Contenido</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="testimonial-card reveal" style="border-color: #444;">
+                <p class="testimonial-text">"Antes me volvía loco intentando mantener el ritmo para subir cosas a TikTok todos los días. Delegarles el proceso fue la mejor decisión. Extraen los momentos perfectos, la edición retiene muchísimo, y yo <span class="highlight-metric">solo me enfoco en crear el contenido largo</span>."</p>
+                <div class="testimonial-author">
+                    <div class="author-avatar" style="background-color: #444;">LN</div>
+                    <div class="author-info">
+                        <h5>Leo Nastacio</h5>
+                        <p>Creador de Contenido</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="testimonial-card reveal">
+                <p class="testimonial-text">"Para el formato podcast, necesitábamos a alguien que entendiera cómo encontrar el 'hook' en horas de charla. Los chicos la tienen clarísima. <span class="highlight-metric">Transformaron nuestros episodios en máquinas de generar tráfico</span> hacia el canal principal. Totalmente recomendados."</p>
+                <div class="testimonial-author">
+                    <div class="author-avatar" style="background-color: #111;">AP</div>
+                    <div class="author-info">
+                        <h5>Alfallo Podcast</h5>
+                        <p>Podcast</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container-sm">
+        <div class="highlight-box reveal" style="border-left-color: #fff; background: rgba(255, 255, 255, 0.05);">
+            <h4 style="font-size: 1.3rem; margin-bottom: 15px;">Sistema de Clonación y Respaldo</h4>
+            <p style="color: #ddd; font-size: 1.05rem; margin-bottom: 0;">El miedo de todo creador: que le bajen la cuenta. Con nuestro sistema de distribución, te administramos hasta 4 cuentas satélites usando tecnología de Alteración de Metadatos. Si el algoritmo frena una cuenta, las otras 3 siguen bombeando vistas y suscripciones hacia tu YouTube ininterrumpidamente.</p>
+        </div>
+    </div>
+
+    <div class="container" id="precios">
+        <h2 class="section-title reveal">Costos por Aprobación & Distribución</h2>
+        <div class="grid-3">
+            <div class="pricing-card premium reveal">
+                <h4 style="color: var(--text-light);">Servicio Core (Clips)</h4>
+                <div class="price" style="color: var(--text-light);">Desde $5 <span style="font-size: 1rem; color: var(--text-muted);">USD/clip</span></div>
+                <div class="desc">Modelo: Paga lo que Apruebas</div>
+                <ul style="text-align: left; margin: 30px auto; max-width: 300px; list-style: none;">
+                    <li style="color: #ddd;">✦ <b>1 Video Procesado:</b> $10 USD / clip aprobado</li>
+                    <li style="color: #ddd;">✦ <b>5 Videos Procesados:</b> $8 USD / clip aprobado</li>
+                    <li style="color: #ddd;">✦ <b>15+ Videos Procesados:</b> $5 USD / clip aprobado</li>
+                    <li style="color: #fff; font-weight:bold; margin-top: 15px; border-bottom: none;">✦ Cero Riesgo: Solo pagas lo que usas</li>
+                </ul>
+            </div>
+            <div class="pricing-card reveal" style="border-color: #444;">
+                <h4 style="color: var(--text-light);">Add-on: Presencia Dual</h4>
+                <div class="price" style="color: var(--text-light);">$300 <span style="font-size: 1rem; color: var(--text-muted);">USD/mes</span></div>
+                <div class="desc">Tráfico Automatizado</div>
+                <ul style="text-align: left; margin: 30px auto; max-width: 300px; list-style: none;">
+                    <li style="color: #ddd;">✦ Gestión de 2 cuentas en redes cortas</li>
+                    <li style="color: #ddd;">✦ Programación de contenido diaria</li>
+                    <li style="color: #ddd;">✦ Te liberamos de la subida manual</li>
+                </ul>
+            </div>
+            <div class="pricing-card reveal" style="border-color: #444;">
+                <h4 style="color: var(--text-light);">Add-on: Dominio de Red</h4>
+                <div class="price" style="color: var(--text-light);">$500 <span style="font-size: 1rem; color: var(--text-muted);">USD/mes</span></div>
+                <div class="desc">Clonación y Respaldo</div>
+                <ul style="text-align: left; margin: 30px auto; max-width: 300px; list-style: none;">
+                    <li style="color: #ddd;">✦ Gestión de 4 cuentas satélites</li>
+                    <li style="color: #ddd;">✦ Alteración de Metadatos Activa</li>
+                    <li style="color: #ddd;">✦ Derivación de audiencia constante</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        MAID STUDIOS | CRECIMIENTO PARA YOUTUBERS | 2026
+        <div class="contact-info">
+            <span>📞 WhatsApp: <a href="https://wa.me/543442668219" target="_blank">+54 3442 668219</a></span>
+            <span>📱 Instagram: <a href="https://instagram.com/maidstudios" target="_blank">@maidstudios</a></span>
+        </div>
+    </footer>
+
+    <script>
+        function reveal() {
+            var reveals = document.querySelectorAll(".reveal");
+            for (var i = 0; i < reveals.length; i++) {
+                var windowHeight = window.innerHeight;
+                var elementTop = reveals[i].getBoundingClientRect().top;
+                if (elementTop < windowHeight - 100) reveals[i].classList.add("active");
+            }
+        }
+        window.addEventListener("scroll", reveal);
+        reveal();
+
+        const ctx = document.getElementById('growthChart').getContext('2d');
+        let grad1 = ctx.createLinearGradient(0, 0, 0, 400);
+        grad1.addColorStop(0, 'rgba(255, 51, 51, 0.4)');
+        grad1.addColorStop(1, 'rgba(255, 51, 51, 0)');
+        
+        let grad2 = ctx.createLinearGradient(0, 0, 0, 400);
+        grad2.addColorStop(0, 'rgba(255, 255, 255, 0.4)');
+        grad2.addColorStop(1, 'rgba(255, 255, 255, 0)');
+
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['Día 1', 'Semana 1', 'Semana 2', 'Semana 3', 'Mes 2'],
+                datasets: [
+                    {
+                        label: 'Video Sin Shorts/Reels',
+                        data: [50000, 5000, 1000, 200, 0],
+                        borderColor: '#ff3333', backgroundColor: grad1,
+                        borderWidth: 2, fill: true, tension: 0.4,
+                        pointBackgroundColor: '#0a0a0a', pointBorderColor: '#ff3333',
+                        borderDash: [5, 5]
+                    },
+                    {
+                        label: 'Video Con Shorts/Reels',
+                        data: [50000, 45000, 60000, 85000, 120000],
+                        borderColor: '#ffffff', backgroundColor: grad2,
+                        borderWidth: 3, fill: true, tension: 0.4,
+                        pointBackgroundColor: '#0a0a0a', pointBorderColor: '#ffffff',
+                    }
+                ]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: {
+                    legend: { 
+                        labels: { color: '#ddd', font: { size: 14 } },
+                        position: 'top',
+                        align: 'center'
+                    },
+                    tooltip: { backgroundColor: '#222', titleColor: '#888', bodyColor: '#fff', padding: 15 }
+                },
+                scales: {
+                    y: { grid: { color: '#222', drawBorder: false }, ticks: { color: '#666' } },
+                    x: { grid: { display: false }, ticks: { color: '#888', font: { weight: 'bold' } } }
+                }
+            }
+        });
+    </script>
+</body>
+</html>
